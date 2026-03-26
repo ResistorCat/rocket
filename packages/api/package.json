@@ -1,0 +1,19 @@
+{
+  "name": "@rocket/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rocket/shared": "workspace:*",
+    "elysia": "^1.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

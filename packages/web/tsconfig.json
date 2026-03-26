@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"]
+  },
+  "include": ["src", "vite.config.ts"]
+}
