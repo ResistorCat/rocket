@@ -1,0 +1,12 @@
+{
+  "name": "@rocket/api",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "bun --watch src/index.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
+    "@rocket/shared": "workspace:*",
+    "elysia": "latest"
+  }
+}
