@@ -7,6 +7,10 @@
   "scripts": {
     "dev": "bun run --filter '*' dev",
     "dev:api": "bun run --filter @rocket/api dev",
-    "dev:web": "bun run --filter @rocket/web dev"
+    "dev:web": "bun run --filter @rocket/web dev",
+    "build": "bun run --filter @rocket/web build",
+    "docker:build": "docker build -t rocket .",
+    "docker:run": "docker run --rm -p 3001:3001 rocket",
+    "docker:up": "docker compose up --build"
   }
 }
