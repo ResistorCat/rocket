@@ -45,11 +45,19 @@ export const categoriesRoutes = new Elysia({ prefix: '/api/categories' })
   })
   .put('/:id', async ({ params, body, set }): Promise<ApiResponse<Category>> => {
     const id = parseInt(params.id);
+    
+    // Solo actualizamos los campos que fueron enviados
+    const updateData: Partial<typeof categories.$inferInsert> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.icon !== undefined) updateData.icon = body.icon;
+
+    if (Object.keys(updateData).length === 0) {
+      set.status = 400;
+      return { success: false, error: 'No fields provided for update' };
+    }
+
     const [updated] = await db.update(categories)
-      .set({
-        name: body.name,
-        icon: body.icon
-      })
+      .set(updateData)
       .where(eq(categories.id, id))
       .returning();
 
