@@ -3,6 +3,10 @@
 > Este archivo provee contexto a los agentes de IA que trabajan en el repositorio.
 > Debe mantenerse actualizado a medida que el proyecto evoluciona.
 
+## Git
+
+- URL: https://github.com/ResistorCat/rocket.git
+
 ## Regla Fundamental
 
 **Todo agente que modifique el proyecto debe actualizar este archivo** si el cambio afecta la estructura, convenciones, dependencias o arquitectura del proyecto. Esto incluye:
