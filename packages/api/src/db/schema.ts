@@ -10,6 +10,7 @@ export const categories = sqliteTable("categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   icon: text("icon"),
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
 });
 
 export const budgets = sqliteTable("budgets", {

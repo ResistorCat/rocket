@@ -8,3 +8,15 @@ export type ApiResponse<T> = {
   data?: T;
   error?: string;
 };
+
+export type Category = {
+  id: number;
+  name: string;
+  icon: string | null;
+  deletedAt: string | null;
+};
+
+export type CreateCategory = {
+  name: string;
+  icon?: string;
+};
