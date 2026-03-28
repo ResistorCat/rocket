@@ -27,3 +27,14 @@
 - `packages/api`: Backend provider (Elysia.js + SQLite + Drizzle ORM)
 - `packages/web`: Frontend PWA (React + Vite)
 - `packages/shared`: Shared types and utilities
+
+## Esquema de Base de Datos (Módulo Finanzas)
+
+El proyecto utiliza **Drizzle ORM** con **SQLite**. Las tablas actuales son:
+
+- `accounts`: Almacena cuentas bancarias/efectivo con una moneda específica (`name`, `currency`).
+- `categories`: Categorías de transacciones (`name`, `icon`).
+- `budgets`: Presupuestos mensuales por categoría (`categoryId`, `amount`, `year`, `month`).
+- `transactions`: Registro de ingresos y gastos (`amount`, `type`, `accountId`, `categoryId`, `description`, `date`).
+
+Los montos (`amount`) se almacenan como `integer` representando la unidad mínima de la divisa (ej: céntimos).
