@@ -1,0 +1,3 @@
+[install]
+# Prefer creating a lockfile
+lockfile = true
