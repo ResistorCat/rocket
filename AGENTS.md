@@ -54,3 +54,7 @@ Actualmente la API provee los siguientes módulos de rutas principales bajo el p
   - `POST /` — Crea una nueva transacción.
   - `PUT /:id` — Actualiza una transacción existente.
   - `DELETE /:id` — Elimina una transacción.
+
+- **Resumen y Presupuesto (`/api/finance`)**:
+  - `GET /summary?month=YYYY-MM` — Retorna total de ingresos y gastos del mes, junto a su desglose por categoría.
+  - `GET /budget?month=YYYY-MM` — Muestra el presupuesto vs lo gastado por categoría ("expense") y el saldo restante.

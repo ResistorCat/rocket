@@ -42,3 +42,28 @@ export type CreateTransaction = {
 };
 
 export type UpdateTransaction = Partial<CreateTransaction>;
+
+export type CategorySummary = {
+  categoryId: number | null;
+  amount: number;
+};
+
+export type FinanceSummary = {
+  totalIncome: number;
+  totalExpense: number;
+  incomeByCategory: CategorySummary[];
+  expenseByCategory: CategorySummary[];
+};
+
+export type CategoryBudget = {
+  categoryId: number;
+  budgeted: number;
+  spent: number;
+  remaining: number;
+};
+
+export type FinanceBudget = {
+  year: number;
+  month: number;
+  categories: CategoryBudget[];
+};
