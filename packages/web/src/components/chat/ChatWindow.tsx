@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { MoreVertical, ArrowLeft } from "lucide-react";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
+import { processCommand } from "../../lib/chatCommands";
 import "./ChatWindow.css";
 
 interface Message {
@@ -36,6 +37,8 @@ export function ChatWindow() {
   }, [messages]);
 
   const handleSendMessage = (text: string) => {
+    const isCommand = text.trim().startsWith("!");
+
     const newMessage: Message = {
       id: Date.now().toString(),
       text,
@@ -47,6 +50,27 @@ export function ChatWindow() {
     };
 
     setMessages((prev) => [...prev, newMessage]);
+
+    if (isCommand) {
+      processCommand(text, {
+        clearChat: () => setMessages([]),
+        addBotMessage: (botText: string) => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString() + Math.random().toString().substring(2, 5),
+              text: botText,
+              timestamp: new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              isOwnMessage: false,
+            },
+          ]);
+        },
+      });
+      return;
+    }
 
     // Simular respuesta del bot
     setTimeout(() => {
