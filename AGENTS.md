@@ -38,3 +38,13 @@ El proyecto utiliza **Drizzle ORM** con **SQLite**. Las tablas actuales son:
 - `transactions`: Registro de ingresos y gastos (`amount`, `type`, `accountId`, `categoryId`, `description`, `date`).
 
 Los montos (`amount`) se almacenan como `integer` representando la unidad mínima de la divisa (ej: céntimos).
+
+## Endpoints de la API
+
+Actualmente la API provee los siguientes módulos de rutas principales bajo el prefijo `/api`:
+
+- **Transacciones (`/api/transactions`)**:
+  - `GET /` — Lista transacciones (filtros opcionales: `startDate`, `endDate`, `categoryId`, `type`).
+  - `POST /` — Crea una nueva transacción.
+  - `PUT /:id` — Actualiza una transacción existente.
+  - `DELETE /:id` — Elimina una transacción.
