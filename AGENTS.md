@@ -30,7 +30,10 @@
 
 ## Esquema de Base de Datos (Módulo Finanzas)
 
-El proyecto utiliza **Drizzle ORM** con **SQLite**. Las tablas actuales son:
+El proyecto utiliza **Drizzle ORM** con **SQLite**.
+**Nota de dependencias:** Para interactuar con SQLite se usa exclusivamente el módulo nativo `bun:sqlite` a través de `drizzle-orm/bun-sqlite`. No instalar ni usar `better-sqlite3`, ya que causa errores de compilación (`node-gyp`, Python, C++) en imágenes Alpine (ej. Docker) y no es necesario para Drizzle ORM en el runtime de Bun.
+
+Las tablas actuales son:
 
 - `accounts`: Almacena cuentas bancarias/efectivo con una moneda específica (`name`, `currency`).
 - `categories`: Categorías de transacciones (`name`, `icon`, `deletedAt`).
