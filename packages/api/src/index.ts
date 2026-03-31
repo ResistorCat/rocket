@@ -3,6 +3,9 @@ import { cors } from '@elysiajs/cors';
 import { staticPlugin } from '@elysiajs/static';
 import { resolve, join } from 'path';
 import type { ApiResponse, HealthCheck } from '@rocket/shared';
+import { categoriesRoutes } from './routes/categories';
+import { transactionsRoutes } from './routes/transactions';
+import { financeRoutes } from './routes/finance';
 
 const STATIC_DIR = resolve(import.meta.dir, '../../web/dist');
 
@@ -15,6 +18,9 @@ const app = new Elysia()
       timestamp: new Date().toISOString()
     }
   }))
+  .use(categoriesRoutes)
+  .use(transactionsRoutes)
+  .use(financeRoutes)
   .use(
     await staticPlugin({
       assets: STATIC_DIR,
