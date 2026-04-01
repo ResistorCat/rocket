@@ -34,6 +34,20 @@
   border-top-left-radius: 0;
 }
 
+.bubble.has-custom {
+  max-width: 90%;
+  padding: 6px 7px 7px 7px;
+}
+
+.bubble.has-custom .bubble-text {
+  padding-right: 0;
+  margin-bottom: 8px;
+}
+
+.bubble.has-custom .bubble-custom {
+  width: 100%;
+}
+
 .bubble-text {
   margin: 0;
   font-size: 15px;

@@ -1,16 +1,22 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { MoreVertical, ArrowLeft } from "lucide-react";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
+import { ToolConfirmCard } from "./ToolConfirmCard";
 import { processCommand } from "../../lib/chatCommands";
+import type { ToolCall, ToolResult } from "@rocket/shared";
 import "./ChatWindow.css";
+
+/** Delimiters that the API stream uses to embed tool call data */
+const TOOL_CALL_START = "\n__TOOL_CALL__";
+const TOOL_CALL_END = "__END_TOOL__\n";
 
 interface Message {
   id: string;
   text?: string;
   timestamp: string;
   isOwnMessage: boolean;
-  children?: React.ReactNode;
+  toolCall?: ToolCall;
 }
 
 export function ChatWindow() {
@@ -39,6 +45,26 @@ export function ChatWindow() {
       .catch((err) => console.error("Failed to fetch chat history:", err))
       .finally(() => setIsFetchingHistory(false));
   }, [API_URL]);
+
+  /** Calls the confirm endpoint and returns the result */
+  const handleToolConfirm = async (toolCallId: string): Promise<ToolResult> => {
+    const res = await fetch(`${API_URL}/api/tools/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ toolCallId }),
+    });
+    return res.json() as Promise<ToolResult>;
+  };
+
+  /** Calls the reject endpoint and returns the result */
+  const handleToolReject = async (toolCallId: string): Promise<ToolResult> => {
+    const res = await fetch(`${API_URL}/api/tools/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ toolCallId }),
+    });
+    return res.json() as Promise<ToolResult>;
+  };
 
   const handleSendMessage = async (text: string) => {
     if (isTyping) return;
@@ -111,20 +137,59 @@ export function ChatWindow() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
+      let buffer = "";
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        
-        const chunk = decoder.decode(value, { stream: true });
-        
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === botMessageId
-              ? { ...msg, text: msg.text + chunk }
-              : msg
-          )
-        );
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Check if the buffer contains a complete tool call delimiter
+        const startIdx = buffer.indexOf(TOOL_CALL_START);
+        const endIdx = buffer.indexOf(TOOL_CALL_END);
+
+        if (startIdx !== -1 && endIdx !== -1) {
+          // Extract clean text (before the tool call marker)
+          const cleanText = buffer.substring(0, startIdx);
+
+          // Extract the tool call JSON
+          const jsonStr = buffer.substring(
+            startIdx + TOOL_CALL_START.length,
+            endIdx
+          );
+
+          let toolCall: ToolCall | undefined;
+          try {
+            toolCall = JSON.parse(jsonStr) as ToolCall;
+          } catch {
+            console.error("Failed to parse tool call JSON:", jsonStr);
+          }
+
+          // Update the bot message: set final text and attach tool call
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === botMessageId
+                ? { ...msg, text: (msg.text ?? "") + cleanText, toolCall }
+                : msg
+            )
+          );
+
+          // Clear the buffer after processing
+          buffer = buffer.substring(endIdx + TOOL_CALL_END.length);
+        } else if (startIdx === -1) {
+          // No tool call in buffer yet — stream text normally
+          const textChunk = buffer;
+          buffer = "";
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === botMessageId
+                ? { ...msg, text: (msg.text ?? "") + textChunk }
+                : msg
+            )
+          );
+        }
+        // If we have TOOL_CALL_START but not END yet, keep accumulating in buffer
       }
     } catch (err) {
       console.error("Error with chat stream:", err);
@@ -174,7 +239,13 @@ export function ChatWindow() {
                 timestamp={msg.timestamp}
                 isOwnMessage={msg.isOwnMessage}
               >
-                {msg.children}
+                {msg.toolCall && (
+                  <ToolConfirmCard
+                    toolCall={msg.toolCall}
+                    onConfirm={handleToolConfirm}
+                    onReject={handleToolReject}
+                  />
+                )}
               </MessageBubble>
             </div>
           );

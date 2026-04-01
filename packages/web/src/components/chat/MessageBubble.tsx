@@ -17,7 +17,7 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   return (
     <div className={`bubble-container ${isOwnMessage ? "own" : "other"}`}>
-      <div className="bubble">
+      <div className={`bubble ${children ? "has-custom" : ""}`}>
         {text && <p className="bubble-text selectable">{text}</p>}
         {children && <div className="bubble-custom">{children}</div>}
         <span className="bubble-time">{timestamp}</span>

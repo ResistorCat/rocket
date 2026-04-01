@@ -1,0 +1,165 @@
+.tool-confirm-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(11, 20, 26, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 168, 132, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  min-width: 220px;
+  max-width: 280px;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+/* ── Header ─────────────────────────────────────── */
+.tool-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(0, 168, 132, 0.12);
+  border-bottom: 1px solid rgba(0, 168, 132, 0.2);
+}
+
+.tool-card-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tool-card-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--icon-active);
+}
+
+.tool-card-name {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--icon-active);
+  background: rgba(0, 168, 132, 0.15);
+  padding: 2px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+/* ── Params Body ─────────────────────────────────── */
+.tool-card-params {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tool-param-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.tool-param-key {
+  font-family: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tool-param-key::after {
+  content: ":";
+}
+
+.tool-param-value {
+  font-family: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+  font-size: 11px;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+/* ── Footer / Actions ────────────────────────────── */
+.tool-card-actions {
+  display: flex;
+  gap: 0;
+}
+
+.tool-btn {
+  flex: 1;
+  padding: 9px 0;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s ease, opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  letter-spacing: 0.01em;
+}
+
+.tool-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tool-btn-confirm {
+  background: rgba(0, 168, 132, 0.2);
+  color: #00e5b0;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tool-btn-confirm:hover:not(:disabled) {
+  background: rgba(0, 168, 132, 0.35);
+}
+
+.tool-btn-reject {
+  background: rgba(255, 255, 255, 0.04);
+  color: #ff7b7b;
+}
+
+.tool-btn-reject:hover:not(:disabled) {
+  background: rgba(200, 50, 50, 0.18);
+}
+
+/* ── Spinner ─────────────────────────────────────── */
+.tool-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: tool-spin 0.7s linear infinite;
+}
+
+@keyframes tool-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Resolved state ───────────────────────────────── */
+.tool-card-resolved {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-card-resolved.confirmed {
+  color: #00e5b0;
+}
+
+.tool-card-resolved.rejected {
+  color: #ff7b7b;
+}
