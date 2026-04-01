@@ -4,45 +4,47 @@ import './ChatInput.css';
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void;
+  isLoading?: boolean;
 }
 
-export function ChatInput({ onSendMessage }: ChatInputProps) {
+export function ChatInput({ onSendMessage, isLoading = false }: ChatInputProps) {
   const [text, setText] = useState('');
 
   const handleSend = () => {
-    if (text.trim()) {
+    if (text.trim() && !isLoading) {
       onSendMessage(text.trim());
       setText('');
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !isLoading) {
       handleSend();
     }
   };
 
   return (
-    <div className="chat-input-container">
-      <button className="icon-btn" aria-label="Adjuntar archivo">
+    <div className={`chat-input-container ${isLoading ? "loading" : ""}`}>
+      <button className="icon-btn" aria-label="Adjuntar archivo" disabled={isLoading}>
         <Paperclip size={24} />
       </button>
       <div className="input-wrapper">
         <input 
           type="text" 
-          placeholder="Mensaje" 
+          placeholder={isLoading ? "Rocket está escribiendo..." : "Mensaje"}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           className="chat-input"
+          disabled={isLoading}
         />
       </div>
-      {text.trim() ? (
-        <button className="icon-btn send-btn" onClick={handleSend} aria-label="Enviar mensaje">
+      {text.trim() && !isLoading ? (
+        <button className="icon-btn send-btn" onClick={handleSend} aria-label="Enviar mensaje" disabled={isLoading}>
           <Send size={20} className="send-icon" />
         </button>
       ) : (
-        <button className="icon-btn mic-btn" aria-label="Mensaje de voz">
+        <button className="icon-btn mic-btn" aria-label="Mensaje de voz" disabled={isLoading}>
           <Mic size={24} />
         </button>
       )}

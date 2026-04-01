@@ -39,6 +39,7 @@ Las tablas actuales son:
 - `categories`: Categorías de transacciones (`name`, `icon`, `deletedAt`).
 - `budgets`: Presupuestos mensuales por categoría (`categoryId`, `amount`, `year`, `month`).
 - `transactions`: Registro de ingresos y gastos (`amount`, `type`, `accountId`, `categoryId`, `description`, `date`, `createdAt`).
+- `messages`: Registro del historial de chat, para el bot y el usuario (`text`, `isOwnMessage`, `createdAt`).
 
 Los montos (`amount`) se almacenan como `integer` representando la unidad mínima de la divisa (ej: céntimos).
 
@@ -61,3 +62,8 @@ Actualmente la API provee los siguientes módulos de rutas principales bajo el p
 - **Resumen y Presupuesto (`/api/finance`)**:
   - `GET /summary?month=YYYY-MM` — Retorna total de ingresos y gastos del mes, junto a su desglose por categoría.
   - `GET /budget?month=YYYY-MM` — Muestra el presupuesto vs lo gastado por categoría ("expense") y el saldo restante.
+
+- **Chat (`/api/chat`)**:
+  - `GET /` — Recupera el historial completo de mensajes.
+  - `POST /` — Envía un mensaje del usuario. Retorna una respuesta en stream chunked (simulando que el bot escribe).
+  - `DELETE /` — Elimina completamente todo el historial de mensajes de la base de datos (para comandos tipo !clear).

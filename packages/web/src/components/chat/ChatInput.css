@@ -71,3 +71,14 @@
 .chat-input::placeholder {
   color: var(--text-placeholder);
 }
+
+.chat-input:disabled {
+  color: var(--text-placeholder);
+  cursor: not-allowed;
+}
+
+.icon-btn:disabled, .send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "bun run src/db/migrate.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",

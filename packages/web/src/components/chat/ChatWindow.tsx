@@ -14,17 +14,11 @@ interface Message {
 }
 
 export function ChatWindow() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "¡Hola! Soy Rocket, tu asistente financiero. ¿En qué te puedo ayudar hoy?",
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      isOwnMessage: false,
-    },
-  ]);
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [isFetchingHistory, setIsFetchingHistory] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +30,19 @@ export function ChatWindow() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (text: string) => {
+  useEffect(() => {
+    fetch(`${API_URL}/api/chat`)
+      .then((res) => res.json())
+      .then((data: Message[]) => {
+        setMessages(data);
+      })
+      .catch((err) => console.error("Failed to fetch chat history:", err))
+      .finally(() => setIsFetchingHistory(false));
+  }, [API_URL]);
+
+  const handleSendMessage = async (text: string) => {
+    if (isTyping) return;
+
     const isCommand = text.trim().startsWith("!");
 
     const newMessage: Message = {
@@ -53,7 +59,14 @@ export function ChatWindow() {
 
     if (isCommand) {
       processCommand(text, {
-        clearChat: () => setMessages([]),
+        clearChat: async () => {
+          try {
+            await fetch(`${API_URL}/api/chat`, { method: "DELETE" });
+            setMessages([]);
+          } catch (e) {
+            console.error("Failed to clear chat:", e);
+          }
+        },
         addBotMessage: (botText: string) => {
           setMessages((prev) => [
             ...prev,
@@ -72,19 +85,52 @@ export function ChatWindow() {
       return;
     }
 
-    // Simular respuesta del bot
-    setTimeout(() => {
-      const responseMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "Acabo de registrar tu transacción. En el futuro, aquí verás componentes interactivos de tus finanzas.",
+    setIsTyping(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.body) throw new Error("No response body");
+
+      const botMessageId = (Date.now() + 1).toString();
+      const botMessage: Message = {
+        id: botMessageId,
+        text: "",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         }),
         isOwnMessage: false,
       };
-      setMessages((prev) => [...prev, responseMessage]);
-    }, 1000);
+
+      setMessages((prev) => [...prev, botMessage]);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, text: msg.text + chunk }
+              : msg
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Error with chat stream:", err);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
@@ -109,6 +155,9 @@ export function ChatWindow() {
 
       <main className="chat-messages">
         <div className="messages-padding"></div>
+        {isFetchingHistory && (
+          <div style={{ textAlign: "center", padding: "1rem" }}>Cargando historial...</div>
+        )}
         {messages.map((msg, index) => {
           const prevMsg = index > 0 ? messages[index - 1] : null;
           const isFirstInSequence =
@@ -134,7 +183,7 @@ export function ChatWindow() {
       </main>
 
       <footer className="chat-footer">
-        <ChatInput onSendMessage={handleSendMessage} />
+        <ChatInput onSendMessage={handleSendMessage} isLoading={isTyping} />
       </footer>
     </div>
   );
