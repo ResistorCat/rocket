@@ -7,6 +7,23 @@
 
 - URL: https://github.com/ResistorCat/rocket.git
 
+## Context7
+
+Puedes acceder a documentación actualizada usando el MCP Context7.
+
+## Workflow IA para PRs de Milestone
+
+Para crear PRs de cierre de milestone de forma repetible desde Copilot Chat, el repositorio define el prompt:
+
+- `.github/prompts/milestone-pr.prompt.md`
+
+Reglas del workflow:
+
+- Crear o actualizar PR `head -> main`.
+- La PR debe incluir siempre: título, descripción, assignee (owner), labels y milestone.
+- No solicitar reviewer (flujo single-maintainer).
+- Revisar últimas PRs (GitHub MCP) de cierre de milestone para seguir el estilo establecido.
+
 ## Regla Fundamental
 
 **Todo agente que modifique el proyecto debe actualizar este archivo** si el cambio afecta la estructura, convenciones, dependencias o arquitectura del proyecto. Esto incluye:
