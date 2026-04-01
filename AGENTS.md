@@ -45,6 +45,21 @@ Reglas del workflow:
 - `packages/web`: Frontend PWA (React + Vite)
 - `packages/shared`: Shared types and utilities
 
+## Integracion LLM (Gemini)
+
+- Proveedor actual de LLM: **Google Gemini** via `@google/genai` en `packages/api`.
+- Variables de entorno requeridas para API:
+  - `GOOGLE_API_KEY` (obligatoria)
+  - `GEMINI_MODEL` (opcional, default recomendado: `gemini-3.1-flash-lite-preview`)
+- Limites configurables del proveedor (defaults del proyecto):
+  - `GEMINI_MAX_RPM=10`
+  - `GEMINI_MAX_TPM=100000` (estimacion local de tokens de entrada)
+  - `GEMINI_MAX_RPD=200`
+- La ruta `POST /api/chat` realiza streaming real desde Gemini y puede emitir tool calls embebidas en el stream usando delimiters `__TOOL_CALL__` y `__END_TOOL__`.
+- Se implementa rate limiting local en memoria + retry con backoff exponencial y jitter para errores reintentables del proveedor.
+- Este proyecto opera en modo **tools-only**: si el modelo no soporta function calling, la API falla con error de configuracion.
+- Si el modelo activo no soporta developer/system instructions, la API hace fallback automatico enviando el contexto del sistema embebido en el prompt de usuario.
+
 ## Esquema de Base de Datos (Módulo Finanzas)
 
 El proyecto utiliza **Drizzle ORM** con **SQLite**.
@@ -82,7 +97,7 @@ Actualmente la API provee los siguientes módulos de rutas principales bajo el p
 
 - **Chat (`/api/chat`)**:
   - `GET /` — Recupera el historial completo de mensajes.
-  - `POST /` — Envía un mensaje del usuario. Retorna una respuesta en stream chunked (incluye tool calls embebidas).
+  - `POST /` — Envía un mensaje del usuario. Retorna una respuesta en stream chunked desde Gemini (incluye tool calls embebidas).
   - `DELETE /` — Elimina completamente todo el historial de mensajes de la base de datos (para comandos tipo !clear).
 
 - **Tools (`/api/tools`)**:

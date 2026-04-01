@@ -120,6 +120,11 @@ export function ChatWindow() {
         body: JSON.stringify({ text }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "No se pudo procesar el mensaje.");
+      }
+
       if (!response.body) throw new Error("No response body");
 
       const botMessageId = (Date.now() + 1).toString();
@@ -193,6 +198,24 @@ export function ChatWindow() {
       }
     } catch (err) {
       console.error("Error with chat stream:", err);
+
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Error desconocido durante la comunicacion con el chat.";
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString() + "-error",
+          text: `No pude responder: ${errorMessage}`,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          isOwnMessage: false,
+        },
+      ]);
     } finally {
       setIsTyping(false);
     }

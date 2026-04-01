@@ -9,6 +9,12 @@ import { financeRoutes } from './routes/finance';
 import { chatRoutes } from './routes/chat';
 import { toolsRoutes } from './routes/tools';
 
+if (!process.env.GOOGLE_API_KEY) {
+  throw new Error('Missing GOOGLE_API_KEY. Define it in environment variables before starting the API.');
+}
+
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.1-flash-lite-preview';
+
 const STATIC_DIR = resolve(import.meta.dir, '../../web/dist');
 
 const app = new Elysia()
@@ -17,7 +23,8 @@ const app = new Elysia()
     success: true,
     data: {
       status: 'ok',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      provider: `gemini:${GEMINI_MODEL}`,
     }
   }))
   .use(categoriesRoutes)
