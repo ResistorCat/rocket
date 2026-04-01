@@ -15,6 +15,13 @@
       "when": 1774738568170,
       "tag": "0001_melodic_viper",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1775001508899,
+      "tag": "0002_ambiguous_shinobi_shaw",
+      "breakpoints": true
     }
   ]
 }

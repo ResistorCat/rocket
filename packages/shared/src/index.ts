@@ -67,3 +67,23 @@ export type FinanceBudget = {
   month: number;
   categories: CategoryBudget[];
 };
+
+/** Represents a pending tool call waiting for user confirmation */
+export type ToolCall = {
+  id: string;
+  name: string;
+  params: Record<string, unknown>;
+  status: 'pending' | 'confirmed' | 'rejected';
+};
+
+/** Payload to confirm or reject a tool call */
+export type ToolActionPayload = {
+  toolCallId: string;
+};
+
+/** Result of a tool execution */
+export type ToolResult = {
+  toolCallId: string;
+  success: boolean;
+  message: string;
+};

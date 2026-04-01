@@ -37,3 +37,12 @@ export const transactions = sqliteTable("transactions", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+export const messages = sqliteTable("messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  text: text("text").notNull(),
+  isOwnMessage: integer("is_own_message", { mode: "boolean" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});

@@ -7,6 +7,23 @@
 
 - URL: https://github.com/ResistorCat/rocket.git
 
+## Context7
+
+Puedes acceder a documentación actualizada usando el MCP Context7.
+
+## Workflow IA para PRs de Milestone
+
+Para crear PRs de cierre de milestone de forma repetible desde Copilot Chat, el repositorio define el prompt:
+
+- `.github/prompts/milestone-pr.prompt.md`
+
+Reglas del workflow:
+
+- Crear o actualizar PR `head -> main`.
+- La PR debe incluir siempre: título, descripción, assignee (owner), labels y milestone.
+- No solicitar reviewer (flujo single-maintainer).
+- Revisar últimas PRs (GitHub MCP) de cierre de milestone para seguir el estilo establecido.
+
 ## Regla Fundamental
 
 **Todo agente que modifique el proyecto debe actualizar este archivo** si el cambio afecta la estructura, convenciones, dependencias o arquitectura del proyecto. Esto incluye:
@@ -19,7 +36,7 @@
 
 ## Convenciones de Código y Versionado
 
-- **Commits**: El proyecto utiliza **Conventional Commits**. Los mensajes de commit son validados usando `commitlint` (a través de Husky). Si realizas un cambio, tu commit **debe** seguir el formato estándar (ej: `feat: add new button`, `fix: header padding`, `chore: update deps`). Si el commit resuelve un issue, **debes** incluir la keyword para cerrarlo automáticamente en el mensaje o body (ej: `Closes #4`, `Fixes #12`).
+- **Commits**: El proyecto utiliza **Conventional Commits**. Los mensajes de commit son validados usando `commitlint` (a través de Husky). Si realizas un cambio, tu commit **debe** seguir el formato estándar (ej: `feat: add new button`, `fix: header padding`, `chore: update deps`). Si el commit resuelve un issue, **debes** incluir la keyword para cerrarlo automáticamente en el mensaje **entre paréntesis** o en el body (ej: `feat: add auth (Closes #4)`, `Fixes #12` en el body). **⚠️ IMPORTANTE:** Al realizar commits desde la terminal o ejecutar comandos en consola, utiliza siempre **comillas simples (`'`)** para envolver strings que contengan caracteres especiales (como `!`, `&`, `*`, `$`, etc.) para evitar comportamientos indeseados o errores de parseo por la shell (zsh/bash).
 - **Versionado**: El versionado está automatizado vía **semantic-release**. Un push a `main` generará automáticamente un *tag* y un *GitHub Release* analizando tus commits. No alteres tags de versiones a mano a no ser que el workflow requiera excepciones (ej: generar el tag inicial). Nota: El desarrollo temprano parte desde la versión artificial `v0.0.0` para obligar incrementos de sub-versión (e.g. `v0.1.0`).
 
 ## Estructura del Proyecto
@@ -30,12 +47,16 @@
 
 ## Esquema de Base de Datos (Módulo Finanzas)
 
-El proyecto utiliza **Drizzle ORM** con **SQLite**. Las tablas actuales son:
+El proyecto utiliza **Drizzle ORM** con **SQLite**.
+**Nota de dependencias:** Para interactuar con SQLite se usa exclusivamente el módulo nativo `bun:sqlite` a través de `drizzle-orm/bun-sqlite`. No instalar ni usar `better-sqlite3`, ya que causa errores de compilación (`node-gyp`, Python, C++) en imágenes Alpine (ej. Docker) y no es necesario para Drizzle ORM en el runtime de Bun.
+
+Las tablas actuales son:
 
 - `accounts`: Almacena cuentas bancarias/efectivo con una moneda específica (`name`, `currency`).
 - `categories`: Categorías de transacciones (`name`, `icon`, `deletedAt`).
 - `budgets`: Presupuestos mensuales por categoría (`categoryId`, `amount`, `year`, `month`).
 - `transactions`: Registro de ingresos y gastos (`amount`, `type`, `accountId`, `categoryId`, `description`, `date`, `createdAt`).
+- `messages`: Registro del historial de chat, para el bot y el usuario (`text`, `isOwnMessage`, `createdAt`).
 
 Los montos (`amount`) se almacenan como `integer` representando la unidad mínima de la divisa (ej: céntimos).
 
@@ -58,3 +79,13 @@ Actualmente la API provee los siguientes módulos de rutas principales bajo el p
 - **Resumen y Presupuesto (`/api/finance`)**:
   - `GET /summary?month=YYYY-MM` — Retorna total de ingresos y gastos del mes, junto a su desglose por categoría.
   - `GET /budget?month=YYYY-MM` — Muestra el presupuesto vs lo gastado por categoría ("expense") y el saldo restante.
+
+- **Chat (`/api/chat`)**:
+  - `GET /` — Recupera el historial completo de mensajes.
+  - `POST /` — Envía un mensaje del usuario. Retorna una respuesta en stream chunked (incluye tool calls embebidas).
+  - `DELETE /` — Elimina completamente todo el historial de mensajes de la base de datos (para comandos tipo !clear).
+
+- **Tools (`/api/tools`)**:
+  - `POST /confirm` — Confirma la ejecución de una tool pendiente.
+  - `POST /reject` — Rechaza la ejecución de una tool pendiente.
+

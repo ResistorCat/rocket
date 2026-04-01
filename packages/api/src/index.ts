@@ -6,6 +6,8 @@ import type { ApiResponse, HealthCheck } from '@rocket/shared';
 import { categoriesRoutes } from './routes/categories';
 import { transactionsRoutes } from './routes/transactions';
 import { financeRoutes } from './routes/finance';
+import { chatRoutes } from './routes/chat';
+import { toolsRoutes } from './routes/tools';
 
 const STATIC_DIR = resolve(import.meta.dir, '../../web/dist');
 
@@ -21,6 +23,8 @@ const app = new Elysia()
   .use(categoriesRoutes)
   .use(transactionsRoutes)
   .use(financeRoutes)
+  .use(chatRoutes)
+  .use(toolsRoutes)
   .use(
     await staticPlugin({
       assets: STATIC_DIR,
