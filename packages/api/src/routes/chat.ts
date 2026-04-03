@@ -1,21 +1,49 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db";
-import { messages } from "../db/schema";
+import { messages, categories } from "../db/schema";
+import { isNull } from "drizzle-orm";
 import { pendingToolCalls } from "./tools";
 import { GeminiClient } from "../lib/gemini-client";
 import { chatFunctionDeclarations } from "../lib/tools-definitions";
 import { chatRateLimiter } from "../lib/rate-limiter";
+import {
+  isReadTool,
+  isWriteTool,
+  executeTool,
+} from "../lib/tool-executor";
 
-/** Delimiter used to embed tool call JSON in the text stream */
 const TOOL_CALL_START = "\n__TOOL_CALL__";
 const TOOL_CALL_END = "__END_TOOL__\n";
 
-const GEMINI_SYSTEM_PROMPT = `
-Eres Rocket Bot, un asistente financiero personal en espanol.
+async function getSystemPrompt() {
+  const cats = await db.query.categories.findMany({
+    where: isNull(categories.deletedAt),
+  });
+  const accts = await db.query.accounts.findMany();
+
+  const categoryList = cats.map((c) => `- ${c.name}`).join("\n");
+  const accountList = accts.map((a) => `- ${a.name} (${a.currency})`).join("\n");
+
+  return `
+Eres Rocket Bot, un asistente financiero personal en español.
 Ayuda al usuario con explicaciones claras sobre ingresos, gastos y presupuesto.
-Cuando el usuario pida acciones financieras, puedes proponer una tool call.
-Nunca confirmes que una transaccion fue ejecutada sin confirmacion del usuario.
+
+FECHA ACTUAL: ${new Date().toLocaleDateString("es-CL")}
+
+CATEGORÍAS EXISTENTES:
+${categoryList || "(Ninguna)"}
+
+CUENTAS EXISTENTES:
+${accountList || "(Ninguna)"}
+
+INSTRUCCIONES:
+1. Usa las herramientas proporcionadas para registrar transacciones o consultar datos.
+2. Si el usuario menciona una categoría que no existe, úsala igualmente; el sistema la creará automáticamente.
+3. Para registrar un gasto o ingreso, SIEMPRE usa las tools 'registrar_gasto' o 'registrar_ingreso'.
+4. NUNCA inventes que una transacción fue registrada sin confirmación (para tools de escritura).
+5. Las consultas (resumen, presupuesto, categorías) se ejecutarán automáticamente.
 `;
+}
 
 const geminiClient = new GeminiClient(process.env.GOOGLE_API_KEY ?? "");
 
@@ -71,11 +99,12 @@ export const chatRoutes = new Elysia({ prefix: "/api/chat" })
 
       // 2. Stream real desde Gemini con tool calls opcionales.
       const botTextChunks: string[] = [];
+      const systemPrompt = await getSystemPrompt();
 
       try {
         const stream = geminiClient.generateStream({
           userMessage: body.text,
-          systemInstruction: GEMINI_SYSTEM_PROMPT,
+          systemInstruction: systemPrompt,
           functionDeclarations: chatFunctionDeclarations,
         });
 
@@ -86,16 +115,25 @@ export const chatRoutes = new Elysia({ prefix: "/api/chat" })
             continue;
           }
 
-          const toolCallId = crypto.randomUUID();
-          const toolCall = {
-            id: toolCallId,
-            name: event.name,
-            params: event.args,
-            status: "pending" as const,
-          };
+          if (isReadTool(event.name)) {
+            // Ejecución inmediata para herramientas de lectura
+            const result = await executeTool(event.name, event.args);
+            const formattedResult = `\n\n${result.message}\n`;
+            botTextChunks.push(formattedResult);
+            yield formattedResult;
+          } else if (isWriteTool(event.name)) {
+            // Flujo de confirmación para herramientas de escritura
+            const toolCallId = crypto.randomUUID();
+            const toolCall = {
+              id: toolCallId,
+              name: event.name,
+              params: event.args,
+              status: "pending" as const,
+            };
 
-          pendingToolCalls.set(toolCallId, toolCall);
-          yield `${TOOL_CALL_START}${JSON.stringify(toolCall)}${TOOL_CALL_END}`;
+            pendingToolCalls.set(toolCallId, toolCall);
+            yield `${TOOL_CALL_START}${JSON.stringify(toolCall)}${TOOL_CALL_END}`;
+          }
         }
       } catch (error) {
         const message =

@@ -2,72 +2,64 @@ import type { FunctionDeclaration } from "@google/genai";
 
 export const chatFunctionDeclarations: FunctionDeclaration[] = [
   {
-    name: "registrar_transaccion",
-    description:
-      "Solicita registrar una transaccion financiera (ingreso o gasto) para posterior confirmacion del usuario.",
+    name: "registrar_gasto",
+    description: "Registra un nuevo gasto (egreso).",
     parametersJsonSchema: {
       type: "object",
       properties: {
-        amount: {
-          type: "number",
-          description:
-            "Monto en unidad decimal legible para usuario (por ejemplo 25.99).",
-        },
-        type: {
-          type: "string",
-          enum: ["income", "expense"],
-          description: "Tipo de transaccion.",
-        },
-        categoryId: {
-          type: "number",
-          description: "ID de categoria existente en el sistema.",
-        },
-        accountId: {
-          type: "number",
-          description: "ID de cuenta existente en el sistema.",
-        },
-        description: {
-          type: "string",
-          description: "Descripcion corta de la transaccion.",
-        },
-        date: {
-          type: "string",
-          description: "Fecha en formato ISO YYYY-MM-DD.",
-        },
+        monto: { type: "number", description: "Monto del gasto (ej: 1500.50)." },
+        categoria: { type: "string", description: "Nombre de la categoría (ej: 'Almuerzo')." },
+        descripcion: { type: "string", description: "Breve descripción opcional." },
+        fecha: { type: "string", description: "Fecha opcional en formato YYYY-MM-DD." },
       },
-      required: ["amount", "type", "accountId", "date"],
+      required: ["monto", "categoria"],
       additionalProperties: false,
     },
   },
   {
-    name: "consultar_resumen_mensual",
-    description:
-      "Solicita consultar el resumen de ingresos y gastos de un mes especifico.",
+    name: "registrar_ingreso",
+    description: "Registra un nuevo ingreso.",
     parametersJsonSchema: {
       type: "object",
       properties: {
-        month: {
-          type: "string",
-          description: "Mes en formato YYYY-MM.",
-        },
+        monto: { type: "number", description: "Monto del ingreso." },
+        categoria: { type: "string", description: "Nombre de la categoría (ej: 'Sueldo')." },
+        descripcion: { type: "string", description: "Breve descripción opcional." },
+        fecha: { type: "string", description: "Fecha opcional en formato YYYY-MM-DD." },
       },
-      required: ["month"],
+      required: ["monto", "categoria"],
       additionalProperties: false,
     },
   },
   {
-    name: "consultar_presupuesto_mensual",
-    description:
-      "Solicita consultar presupuesto versus gasto del mes especificado.",
+    name: "consultar_resumen",
+    description: "Consulta el resumen financiero (totales, ingresos vs gastos) de un mes.",
     parametersJsonSchema: {
       type: "object",
       properties: {
-        month: {
-          type: "string",
-          description: "Mes en formato YYYY-MM.",
-        },
+        mes: { type: "string", description: "Mes en formato YYYY-MM. Default: Mes actual." },
       },
-      required: ["month"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "consultar_presupuesto",
+    description: "Consulta el estado del presupuesto para una categoría o el mes completo.",
+    parametersJsonSchema: {
+      type: "object",
+      properties: {
+        mes: { type: "string", description: "Mes en formato YYYY-MM." },
+        categoria: { type: "string", description: "Nombre de categoría opcional." },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "listar_categorias",
+    description: "Lista todas las categorías activas en el sistema.",
+    parametersJsonSchema: {
+      type: "object",
+      properties: {},
       additionalProperties: false,
     },
   },

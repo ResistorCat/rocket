@@ -87,4 +87,5 @@ export type ToolResult = {
   toolCallId: string;
   success: boolean;
   message: string;
+  data?: any;
 };
