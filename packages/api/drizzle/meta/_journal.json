@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1774736398336,
-      "tag": "0000_vengeful_outlaw_kid",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1774738568170,
-      "tag": "0001_melodic_viper",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1775001508899,
-      "tag": "0002_ambiguous_shinobi_shaw",
+      "when": 1775407689547,
+      "tag": "0000_milky_skrulls",
       "breakpoints": true
     }
   ]

@@ -75,6 +75,18 @@ Las tablas actuales son:
 - `transactions`: Registro de ingresos y gastos (`amount`, `type`, `accountId`, `categoryId`, `description`, `date`, `createdAt`).
 - `messages`: Registro del historial de chat, para el bot y el usuario (`text`, `isOwnMessage`, `createdAt`).
 
+### Memoria conversacional del chat
+
+- `POST /api/chat` ahora arma contexto con ventana deslizante de mensajes recientes antes de llamar a Gemini.
+- El system context incorpora un snapshot financiero del mes actual junto con categorías y cuentas.
+- La tabla `messages` pasó a guardar metadatos opcionales del turno: `tokensIn`, `tokensOut`, `contextWindow` y `financeSnapshot`.
+- Mantener el stream compatible con el frontend existente: texto normal + delimitadores de tool calls.
+
+### Base de datos
+
+- La base SQLite del API se resuelve de forma absoluta desde `packages/api/src/db`, no desde el cwd del proceso.
+- Las migraciones también usan rutas absolutas al folder `packages/api/drizzle` para evitar desalineación entre `bun run dev` y `bun run db:migrate`.
+
 Los montos (`amount`) se almacenan como `integer` representando la unidad mínima de la divisa (ej: céntimos).
 
 ## Endpoints de la API

@@ -115,6 +115,14 @@ export class InMemoryGeminiRateLimiter {
       retryAfterSeconds: 0,
     };
   }
+
+  recordOutputTokens(outputTokens: number): void {
+    if (!Number.isFinite(outputTokens) || outputTokens <= 0) {
+      return;
+    }
+
+    this.tokenEvents.push({ at: Date.now(), tokens: outputTokens });
+  }
 }
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {

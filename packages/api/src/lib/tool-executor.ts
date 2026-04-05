@@ -2,6 +2,12 @@ import { db } from "../db";
 import { accounts, categories, transactions, budgets } from "../db/schema";
 import { eq, and, gte, lte, isNull } from "drizzle-orm";
 import type { ToolResult } from "@rocket/shared";
+import {
+  getCurrentMonthKey,
+  formatMoney,
+  parseMonthRange,
+  getMonthTotals,
+} from "./finance-utils";
 
 export const WRITE_TOOLS = new Set(["registrar_gasto", "registrar_ingreso"]);
 export const READ_TOOLS = new Set([
@@ -143,75 +149,36 @@ async function handleRegisterTransaction(
 }
 
 async function handleConsultarResumen(args: Record<string, any>): Promise<ToolResult> {
-  const mes = args.mes || new Date().toISOString().slice(0, 7); // YYYY-MM
-  const [yearStr, monthStr] = mes.split("-");
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-
-  const results = await db.query.transactions.findMany({
-    where: and(
-      gte(transactions.date, startDate),
-      lte(transactions.date, endDate)
-    ),
-  });
-
-  let totalIncome = 0;
-  let totalExpense = 0;
-
-  for (const t of results) {
-    if (t.type === "income") totalIncome += t.amount;
-    else totalExpense += t.amount;
-  }
-
-  const format = (cents: number) => (cents / 100).toFixed(2);
+  const mes = args.mes || getCurrentMonthKey();
+  const range = parseMonthRange(mes);
+  const totals = await getMonthTotals(range);
 
   let message = `📊 Resumen de ${mes}:\n`;
-  message += `• Ingresos: $${format(totalIncome)}\n`;
-  message += `• Gastos: $${format(totalExpense)}\n`;
-  message += `• Balance: $${format(totalIncome - totalExpense)}`;
+  message += `• Ingresos: ${formatMoney(totals.totalIncome)}\n`;
+  message += `• Gastos: ${formatMoney(totals.totalExpense)}\n`;
+  message += `• Balance: ${formatMoney(totals.totalIncome - totals.totalExpense)}`;
 
   return {
     toolCallId: "",
     success: true,
     message,
-    data: { totalIncome, totalExpense, month: mes },
+    data: { totalIncome: totals.totalIncome, totalExpense: totals.totalExpense, month: mes },
   };
 }
 
 async function handleConsultarPresupuesto(args: Record<string, any>): Promise<ToolResult> {
-  const mes = args.mes || new Date().toISOString().slice(0, 7);
-  const [yearStr, monthStr] = mes.split("-");
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+  const mes = args.mes || getCurrentMonthKey();
+  const range = parseMonthRange(mes);
 
   // Fetch budgets and actual expenses
-  const monthlyBudgets = await db.query.budgets.findMany({
-    where: and(eq(budgets.year, year), eq(budgets.month, month)),
-    with: { category: true },
-  });
+  const [monthlyBudgets, totals] = await Promise.all([
+    db.query.budgets.findMany({
+      where: and(eq(budgets.year, range.year), eq(budgets.month, range.month)),
+      with: { category: true },
+    }),
+    getMonthTotals(range),
+  ]);
 
-  const expenses = await db.query.transactions.findMany({
-    where: and(
-      eq(transactions.type, "expense"),
-      gte(transactions.date, startDate),
-      lte(transactions.date, endDate)
-    ),
-  });
-
-  const expenseMap = new Map<number, number>();
-  for (const exp of expenses) {
-    if (exp.categoryId !== null) {
-      expenseMap.set(exp.categoryId, (expenseMap.get(exp.categoryId) || 0) + exp.amount);
-    }
-  }
-
-  const format = (cents: number) => (cents / 100).toFixed(2);
   let message = `🎯 Presupuesto ${mes}:\n`;
 
   if (monthlyBudgets.length === 0) {
@@ -219,11 +186,11 @@ async function handleConsultarPresupuesto(args: Record<string, any>): Promise<To
   } else {
     for (const b of monthlyBudgets) {
       const category = b.category;
-      const spent = expenseMap.get(b.categoryId) || 0;
+      const spent = totals.expenseByCategory.get(b.categoryId) || 0;
       const percent = b.amount > 0 ? (spent / b.amount) * 100 : 0;
       const status = percent >= 100 ? "⚠️" : percent > 80 ? "🟡" : "🟢";
       
-      message += `${status} ${category?.name || "Sin nombre"}: $${format(spent)} / $${format(b.amount)} (${percent.toFixed(0)}%)\n`;
+      message += `${status} ${category?.name || "Sin nombre"}: ${formatMoney(spent)} / ${formatMoney(b.amount)} (${percent.toFixed(0)}%)\n`;
     }
   }
 

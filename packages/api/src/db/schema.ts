@@ -50,6 +50,10 @@ export const messages = sqliteTable("messages", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   text: text("text").notNull(),
   isOwnMessage: integer("is_own_message", { mode: "boolean" }).notNull(),
+  tokensIn: integer("tokens_in"),
+  tokensOut: integer("tokens_out"),
+  contextWindow: text("context_window"),
+  financeSnapshot: text("finance_snapshot"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),

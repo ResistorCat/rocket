@@ -3,10 +3,11 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { resolve } from "path";
 
-const sqlite = new Database("data/rocket.db");
+const sqlitePath = resolve(import.meta.dir, "../../data/rocket.db");
+const sqlite = new Database(sqlitePath);
 const db = drizzle(sqlite);
 
-const migrationsFolder = resolve(process.cwd(), "drizzle");
+const migrationsFolder = resolve(import.meta.dir, "../../drizzle");
 
 console.log(`Running migrations from ${migrationsFolder}...`);
 

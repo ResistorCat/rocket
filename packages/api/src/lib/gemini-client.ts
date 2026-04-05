@@ -6,7 +6,13 @@ import {
 
 export type GeminiStreamEvent =
   | { type: "text"; text: string }
-  | { type: "toolCall"; name: string; args: Record<string, unknown> };
+  | { type: "toolCall"; name: string; args: Record<string, unknown> }
+  | {
+      type: "usage";
+      promptTokens?: number;
+      responseTokens?: number;
+      totalTokens?: number;
+    };
 
 type GenerateStreamInput = {
   userMessage: string;
@@ -193,7 +199,21 @@ export class GeminiClient {
             }>;
           };
         }>;
+        usageMetadata?: {
+          promptTokenCount?: number;
+          candidatesTokenCount?: number;
+          totalTokenCount?: number;
+        };
       };
+
+      if (rawChunk.usageMetadata) {
+        yield {
+          type: "usage",
+          promptTokens: rawChunk.usageMetadata.promptTokenCount,
+          responseTokens: rawChunk.usageMetadata.candidatesTokenCount,
+          totalTokens: rawChunk.usageMetadata.totalTokenCount,
+        };
+      }
 
       const candidates = Array.isArray(rawChunk.candidates)
         ? rawChunk.candidates
