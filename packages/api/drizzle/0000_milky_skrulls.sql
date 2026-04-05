@@ -16,7 +16,19 @@ CREATE TABLE `budgets` (
 CREATE TABLE `categories` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
-	`icon` text
+	`icon` text,
+	`deleted_at` integer
+);
+--> statement-breakpoint
+CREATE TABLE `messages` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`text` text NOT NULL,
+	`is_own_message` integer NOT NULL,
+	`tokens_in` integer,
+	`tokens_out` integer,
+	`context_window` text,
+	`finance_snapshot` text,
+	`created_at` integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `transactions` (

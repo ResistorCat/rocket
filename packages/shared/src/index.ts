@@ -1,6 +1,7 @@
 export type HealthCheck = {
   status: 'ok' | 'error';
   timestamp: string;
+  provider?: string;
 };
 
 export type ApiResponse<T> = {
@@ -86,4 +87,5 @@ export type ToolResult = {
   toolCallId: string;
   success: boolean;
   message: string;
+  data?: any;
 };

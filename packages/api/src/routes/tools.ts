@@ -1,17 +1,17 @@
 import { Elysia, t } from "elysia";
 import type { ToolCall, ToolResult } from "@rocket/shared";
 
+import { executeTool } from "../lib/tool-executor";
+
 /**
  * In-memory store for pending tool calls.
- * Tool calls are ephemeral (cleared on server restart) — this is intentional
- * for now, as they represent real-time agent interactions.
  */
 export const pendingToolCalls = new Map<string, ToolCall>();
 
 export const toolsRoutes = new Elysia({ prefix: "/api/tools" })
   .post(
     "/confirm",
-    ({ body }): ToolResult => {
+    async ({ body }): Promise<ToolResult> => {
       const toolCall = pendingToolCalls.get(body.toolCallId);
 
       if (!toolCall) {
@@ -22,15 +22,16 @@ export const toolsRoutes = new Elysia({ prefix: "/api/tools" })
         };
       }
 
-      // Update status to confirmed and remove from pending store
+      // Execute real tool logic
+      const result = await executeTool(toolCall.name, toolCall.params);
+      
+      // Update status and remove from pending store
       toolCall.status = "confirmed";
       pendingToolCalls.delete(body.toolCallId);
 
-      // Mock execution result — will be replaced by real LLM tool execution later
       return {
+        ...result,
         toolCallId: body.toolCallId,
-        success: true,
-        message: `✅ Tool "${toolCall.name}" ejecutada correctamente.`,
       };
     },
     {

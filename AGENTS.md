@@ -37,6 +37,8 @@ Reglas del workflow:
 ## Convenciones de Código y Versionado
 
 - **Commits**: El proyecto utiliza **Conventional Commits**. Los mensajes de commit son validados usando `commitlint` (a través de Husky). Si realizas un cambio, tu commit **debe** seguir el formato estándar (ej: `feat: add new button`, `fix: header padding`, `chore: update deps`). Si el commit resuelve un issue, **debes** incluir la keyword para cerrarlo automáticamente en el mensaje **entre paréntesis** o en el body (ej: `feat: add auth (Closes #4)`, `Fixes #12` en el body). **⚠️ IMPORTANTE:** Al realizar commits desde la terminal o ejecutar comandos en consola, utiliza siempre **comillas simples (`'`)** para envolver strings que contengan caracteres especiales (como `!`, `&`, `*`, `$`, etc.) para evitar comportamientos indeseados o errores de parseo por la shell (zsh/bash).
+- **Zonas Horarias**: Para evitar el "day-off bug" (gastos registrados en el día anterior por desfase UTC), nunca uses `new Date("YYYY-MM-DD")` directamente. Parsea siempre usando `split('-')` y el constructor `new Date(year, month - 1, day)` para forzar el contexto de la zona horaria local del sistema.
+- **Consultas a DB**: Evita patrones N+1. Utiliza las relaciones (`relations`) de Drizzle y la propiedad `with` en las queries para traer datos relacionados en una sola operación.
 - **Versionado**: El versionado está automatizado vía **semantic-release**. Un push a `main` generará automáticamente un *tag* y un *GitHub Release* analizando tus commits. No alteres tags de versiones a mano a no ser que el workflow requiera excepciones (ej: generar el tag inicial). Nota: El desarrollo temprano parte desde la versión artificial `v0.0.0` para obligar incrementos de sub-versión (e.g. `v0.1.0`).
 
 ## Estructura del Proyecto
@@ -44,6 +46,21 @@ Reglas del workflow:
 - `packages/api`: Backend provider (Elysia.js + SQLite + Drizzle ORM)
 - `packages/web`: Frontend PWA (React + Vite)
 - `packages/shared`: Shared types and utilities
+
+## Integracion LLM (Gemini)
+
+- Proveedor actual de LLM: **Google Gemini** via `@google/genai` en `packages/api`.
+- Variables de entorno requeridas para API:
+  - `GOOGLE_API_KEY` (obligatoria)
+  - `GEMINI_MODEL` (opcional, default recomendado: `gemini-3.1-flash-lite-preview`)
+- Limites configurables del proveedor (defaults del proyecto):
+  - `GEMINI_MAX_RPM=10`
+  - `GEMINI_MAX_TPM=100000` (estimacion local de tokens de entrada)
+  - `GEMINI_MAX_RPD=200`
+- La ruta `POST /api/chat` realiza streaming real desde Gemini y puede emitir tool calls embebidas en el stream usando delimiters `__TOOL_CALL__` y `__END_TOOL__`.
+- Se implementa rate limiting local en memoria + retry con backoff exponencial y jitter para errores reintentables del proveedor.
+- Este proyecto opera en modo **tools-only**: si el modelo no soporta function calling, la API falla con error de configuracion.
+- Si el modelo activo no soporta developer/system instructions, la API hace fallback automatico enviando el contexto del sistema embebido en el prompt de usuario.
 
 ## Esquema de Base de Datos (Módulo Finanzas)
 
@@ -57,6 +74,18 @@ Las tablas actuales son:
 - `budgets`: Presupuestos mensuales por categoría (`categoryId`, `amount`, `year`, `month`).
 - `transactions`: Registro de ingresos y gastos (`amount`, `type`, `accountId`, `categoryId`, `description`, `date`, `createdAt`).
 - `messages`: Registro del historial de chat, para el bot y el usuario (`text`, `isOwnMessage`, `createdAt`).
+
+### Memoria conversacional del chat
+
+- `POST /api/chat` ahora arma contexto con ventana deslizante de mensajes recientes antes de llamar a Gemini.
+- El system context incorpora un snapshot financiero del mes actual junto con categorías y cuentas.
+- La tabla `messages` pasó a guardar metadatos opcionales del turno: `tokensIn`, `tokensOut`, `contextWindow` y `financeSnapshot`.
+- Mantener el stream compatible con el frontend existente: texto normal + delimitadores de tool calls.
+
+### Base de datos
+
+- La base SQLite del API se resuelve de forma absoluta desde `packages/api/src/db`, no desde el cwd del proceso.
+- Las migraciones también usan rutas absolutas al folder `packages/api/drizzle` para evitar desalineación entre `bun run dev` y `bun run db:migrate`.
 
 Los montos (`amount`) se almacenan como `integer` representando la unidad mínima de la divisa (ej: céntimos).
 
@@ -82,7 +111,7 @@ Actualmente la API provee los siguientes módulos de rutas principales bajo el p
 
 - **Chat (`/api/chat`)**:
   - `GET /` — Recupera el historial completo de mensajes.
-  - `POST /` — Envía un mensaje del usuario. Retorna una respuesta en stream chunked (incluye tool calls embebidas).
+  - `POST /` — Envía un mensaje del usuario. Retorna una respuesta en stream chunked desde Gemini (incluye tool calls embebidas).
   - `DELETE /` — Elimina completamente todo el historial de mensajes de la base de datos (para comandos tipo !clear).
 
 - **Tools (`/api/tools`)**:
